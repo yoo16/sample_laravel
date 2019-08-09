@@ -2,17 +2,19 @@
 
 @section('content')
 
+@include('components.error')
+
 <form method="post" action="{{ url('/user/update', ['id' => $user->id])}}">
   {{ csrf_field() }}
 
   <table class="table">
     <tr>
       <th>Name</th>
-      <td><input id="name" type="text" name="name" value="{{ $user->name }}"></td>
+      <td><input id="name" class="form-control col-6" type="text" name="name" value="{{ $user->name }}"></td>
     </tr>
     <tr>
       <th>Email</th>
-      <td><input id="email" type="text" name="email" value="{{ $user->email }}"></td>
+      <td><input id="email" class="form-control col-6" type="text" name="email" value="{{ $user->email }}"></td>
     </tr>
   </table>
 

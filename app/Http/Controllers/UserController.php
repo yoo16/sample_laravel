@@ -3,7 +3,9 @@
 namespace LaravelSample\Http\Controllers;
 
 use LaravelSample\User;
-use LaravelSample\Http\Requests\StoreUserPost;
+use \Illuminate\Database\QueryException;
+use LaravelSample\Http\Requests\UserStoreRequest;
+use LaravelSample\Http\Requests\UserUpdateRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -18,8 +20,9 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
+        $request->session()->flush();
         //$user = DB::table('users')->get();
-        $users = User::paginate(self::$user_limit);
+        $users = User::orderBy('id')->paginate(self::$user_limit);
         //$user = User::paginate(self::$user_limit, ['*'], 'page', $request->page);
         //$user = DB::table('users')->paginate(self::$user_limit, ['*'], 'user_page', $request->page);
         $data = ['users' => $users];
@@ -31,8 +34,11 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
+        //$user = new User;
+        //$data['user'] = $user;
+        //return view('user.create', $data);
         return view('user.create');
     }
 
@@ -42,11 +48,15 @@ class UserController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(UserStoreRequest $request)
     {
-        $user = new User;
-        $user->fill($request->all())->save();
-        return redirect('user');
+        $request->session()->put('request', $request->all());
+        try {
+            User::create($request->validated());
+            return redirect('user');
+        } catch (QueryException $e) {
+            return back()->withInput();
+        }
     }
 
     /**
@@ -66,10 +76,13 @@ class UserController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Request $request, $id)
     {
         $user = User::find($id);
-        $data = ['user' => $user];
+        if ($request->session()->has('request')) {
+            $user->fill($request->session()->get('request'));
+        }
+        $data['user'] = $user;
         return view('user.edit', $data);
     }
 
@@ -80,12 +93,18 @@ class UserController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(UserUpdateRequest $request, $id)
     {
-        $user = User::find($id);
-        $user->fill($request->all())->save();
-        $data = ['user' => $user];
-        return view('user.edit', $data);
+        $data = $request->all();
+        $request->session()->put('request', $data);
+        try {
+            $user = User::find($id);
+            $user->fill($request->all())->save();
+            $request->session()->flush();
+        } catch (QueryException $e) {
+            $request->session()->put('errors', ['save_error']);
+        }
+        return back()->withInput();
     }
 
     /**

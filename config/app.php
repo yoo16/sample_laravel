@@ -2,6 +2,9 @@
 
 return [
 
+    'log' => env('APP_LOG', 'daily'),
+    'log_max_files' => '10',
+
     /*
     |--------------------------------------------------------------------------
     | Application Name
@@ -52,7 +55,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
+    'url' => env('APP_URL', 'http://debian'),
 
     'asset_url' => env('ASSET_URL', null),
 
